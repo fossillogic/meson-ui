@@ -26,6 +26,7 @@ if __name__ == "__main__":
         # If the argument "test" is provided, run the test suite using pytest.
         import pytest
 
-        pytest.main()
+        # Run the three pytest files in the root directory.
+        pytest.main(["test_mainapp.py", "test_dialogs.py", "test_background.py"])
     else:
-        print("Usage: python run_project.py [test]")
+        print("Usage: python project.py [test]")

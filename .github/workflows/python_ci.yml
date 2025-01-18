@@ -54,7 +54,7 @@ jobs:
         run: python setup.py build
 
       - name: Run Tests
-        run: python setup.py test -v
+        run: python meson-ui.py test -v
 
   build_macosx:
     name: Building on macOS with Xcode ${{ matrix.xcode_version }}
@@ -87,7 +87,7 @@ jobs:
         run: python setup.py build
   
       - name: Run Tests
-        run: python setup.py test -v
+        run: python meson-ui.py test -v
 
   build_msys:
     name: Building on MSYS ${{ matrix.architecture }}
@@ -127,7 +127,7 @@ jobs:
         run: python setup.py build
 
       - name: Run Tests
-        run: python setup.py test -v
+        run: python meson-ui.py test -v
 
   build_mingw:
     name: Building on MinGW ${{ matrix.architecture }}
@@ -171,7 +171,7 @@ jobs:
         run: python setup.py build
 
       - name: Run Tests
-        run: python setup.py test -v
+        run: python meson-ui.py test -v
 
   build_posix:
     name: Build on Linux ${{ matrix.distro }}
@@ -213,4 +213,4 @@ jobs:
             /bin/bash -c "
               python setup.py configure --fatal-warnings -Dwerror=true -Dwith_test=enabled -Dwarning_level=3 -Dc_std=c17 -Dfossil-test:c_std=c17
               python setup.py build
-              python setup.py test -v"
+              python meson-ui.py test -v"
