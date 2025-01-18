@@ -10,6 +10,7 @@ from ..logic.dialog.tutorial import TutorialDialog
 
 
 class TestInitDialog:
+
     @pytest.fixture(autouse=True)
     def setup_method(self):
         self.root = Tk()
