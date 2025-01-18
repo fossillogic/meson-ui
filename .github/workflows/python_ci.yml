@@ -1,47 +1,201 @@
-name: CI Project Builder
+name: Meson CI
 
 on:
   push:
     paths:
+      - "**.c"
+      - "**.h"
+      - "**.cpp"
+      - "**.hpp"
+      - "**.rs"
       - "**.py"
-      - "**.txt"
+      - "**.build"
+      - "**.options"
   pull_request:
-    branches:
-      - "main"
     paths:
+      - "**.c"
+      - "**.h"
+      - "**.cpp"
+      - "**.hpp"
+      - "**.rs"
       - "**.py"
-      - "**.txt"
-
-permissions:
-  contents: read
+      - "**.build"
+      - "**.options"
 
 jobs:
-  minimum_python:
-    runs-on: ubuntu-latest
+  build_msvc:
+    name: Building on MSVC ${{ matrix.msvc_version }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        msvc_version: [2015, 2017, 2019, 2022]
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.7'
-    - name: Install Dependencies
-      run: |
-        pip install pytest
-    - name: Run Tests (Minimum Python Version)
-      run: |
-        python meson-ui test
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  latest_python:
-    runs-on: ubuntu-latest
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Meson and Ninja
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install meson ninja pytest
+          if ($env:msvc_version -eq "2015") {
+            choco install visualstudio2015buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --includeRecommended --includeOptional --passive"
+          } elseif ($env:msvc_version -eq "2017") {
+            choco install visualstudio2017buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive"
+          } elseif ($env:msvc_version -eq "2019") {
+            choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive"
+          } elseif ($env:msvc_version -eq "2022") {
+            choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive"
+          }
+          $env:CC="cl.exe"
+          $env:CXX="cl.exe"
+
+      - name: Run Tests
+        run: python meson-ui.py test
+
+  build_macosx:
+    name: Building on macOS with Xcode ${{ matrix.xcode_version }}
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        xcode_version: ["15.2", "15.3"]
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Install Dependencies
-      run: |
-        pip install pytest
-    - name: Run Tests (Latest Python Version)
-      run: |
-        python meson-ui.py test
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+  
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+  
+      - name: Install Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_${{ matrix.xcode_version }}.app
+  
+      - name: Install Meson and Ninja
+        run: |
+          python -m pip install meson ninja pytest
+  
+      - name: Run Tests
+        run: python meson-ui.py test
+
+  build_msys:
+    name: Building on MSYS ${{ matrix.architecture }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        architecture: [x86, x64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+
+      - name: Set environment variables
+        run: |
+          echo "CC=/mingw${{ matrix.architecture }}/bin/gcc.exe" >> $GITHUB_ENV
+          echo "CXX=/mingw${{ matrix.architecture }}/bin/g++.exe" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyTest
+        run: |
+          python -m pip install meson ninja pytest
+
+      - name: Run Tests
+        run: python meson-ui.py test
+
+  build_mingw:
+    name: Building on MinGW ${{ matrix.architecture }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        architecture: [x86, x64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install MinGW
+        run: |
+          choco install mingw
+
+      - name: Set environment variables
+        run: |
+          if ($env:matrix_architecture -eq "x86") {
+            $env:CC="C:/tools/mingw32/bin/gcc.exe"
+            $env:CXX="C:/tools/mingw32/bin/g++.exe"
+          } else {
+            $env:CC="C:/tools/mingw64/bin/gcc.exe"
+            $env:CXX="C:/tools/mingw64/bin/g++.exe"
+          }
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Meson and Ninja
+        run: |
+          python -m pip install meson ninja pytest
+
+      - name: Run Tests
+        run: python meson-ui.py test
+
+  build_posix:
+    name: Build on Linux ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        distro: [ubuntu, fedora, archlinux, debian]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.distro }}
+          restore-keys: |
+            ${{ runner.os }}-buildx
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --file .github/ciimage/Dockerfile.${{ matrix.distro }} \
+            --tag ${GITHUB_REPOSITORY}:${{ matrix.distro }} .
+
+      - name: Run Meson Build in Docker Container
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ${GITHUB_REPOSITORY}:${{ matrix.distro }} \
+            /bin/bash -c "
+              apt-get update
+              python meson-ui.py test"
