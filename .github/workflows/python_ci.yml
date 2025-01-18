@@ -1,0 +1,47 @@
+name: CI Project Builder
+
+on:
+  push:
+    paths:
+      - "**.py"
+      - "**.txt"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "**.py"
+      - "**.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  minimum_python:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.7'
+    - name: Install Dependencies
+      run: |
+        pip install pytest
+    - name: Run Tests (Minimum Python Version)
+      run: |
+        python meson-ui test
+
+  latest_python:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install Dependencies
+      run: |
+        pip install pytest
+    - name: Run Tests (Latest Python Version)
+      run: |
+        python meson-ui.py test
