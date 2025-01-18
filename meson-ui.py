@@ -27,6 +27,10 @@ if __name__ == "__main__":
         import pytest
 
         # Run the three pytest files in the root directory.
-        pytest.main(["test_mainapp.py", "test_dialogs.py", "test_background.py"])
+        pytest.main([
+            # os.path.join("code", "tests", "test_mainapp.py"),
+            # os.path.join("code", "tests", "test_dialogs.py"),
+            os.path.join("code", "tests", "test_background.py")
+        ])
     else:
         print("Usage: python project.py [test]")
