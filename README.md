@@ -21,27 +21,25 @@ To install Meson-UI, follow these steps:
 
 Ensure you have the following prerequisites installed:
 
-- [Python 3.6+](https://www.python.org/downloads/)
+- [Python 3.7+](https://www.python.org/downloads/)
 - [Meson Build System](https://mesonbuild.com/)
 
 ### Steps
 
 1. Clone the Meson-UI repository:
+
     ```bash
     git clone https://github.com/fossillogic/meson-ui.git
     ```
 
 2. Navigate to the project directory:
+
     ```bash
     cd meson-ui
     ```
 
-3. Install the required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+3. Run the application:
 
-4. Run the application:
     ```bash
     python meson-ui.py
     ```
